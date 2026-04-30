@@ -1,0 +1,2205 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ImmunoQuest - Jogo de Tabuleiro Imunologico</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+      min-height: 100vh;
+      color: #f1f5f9;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Floating Particles Background */
+    .particles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 0;
+    }
+
+    .particle {
+      position: absolute;
+      border-radius: 50%;
+      animation: float 15s infinite ease-in-out;
+      opacity: 0.3;
+    }
+
+    .particle:nth-child(1) { width: 20px; height: 20px; background: #5eead4; left: 10%; animation-delay: 0s; }
+    .particle:nth-child(2) { width: 15px; height: 15px; background: #f87171; left: 20%; animation-delay: 2s; }
+    .particle:nth-child(3) { width: 25px; height: 25px; background: #a78bfa; left: 30%; animation-delay: 4s; }
+    .particle:nth-child(4) { width: 18px; height: 18px; background: #fbbf24; left: 40%; animation-delay: 1s; }
+    .particle:nth-child(5) { width: 22px; height: 22px; background: #34d399; left: 50%; animation-delay: 3s; }
+    .particle:nth-child(6) { width: 16px; height: 16px; background: #60a5fa; left: 60%; animation-delay: 5s; }
+    .particle:nth-child(7) { width: 20px; height: 20px; background: #f472b6; left: 70%; animation-delay: 2.5s; }
+    .particle:nth-child(8) { width: 14px; height: 14px; background: #5eead4; left: 80%; animation-delay: 4.5s; }
+    .particle:nth-child(9) { width: 24px; height: 24px; background: #fb923c; left: 90%; animation-delay: 1.5s; }
+    .particle:nth-child(10) { width: 18px; height: 18px; background: #a78bfa; left: 5%; animation-delay: 3.5s; }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+      10% { opacity: 0.3; }
+      90% { opacity: 0.3; }
+      100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+    }
+
+    /* DNA Helix Decoration */
+    .dna-decoration {
+      position: fixed;
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 40px;
+      height: 300px;
+      z-index: 0;
+      opacity: 0.15;
+    }
+
+    .dna-strand {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+    }
+
+    .dna-base {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      animation: dna-rotate 4s infinite ease-in-out;
+    }
+
+    @keyframes dna-rotate {
+      0%, 100% { transform: translateX(0); }
+      50% { transform: translateX(30px); }
+    }
+
+    /* Cell Decoration */
+    .cell-decoration {
+      position: fixed;
+      left: 20px;
+      bottom: 20%;
+      width: 80px;
+      height: 80px;
+      border: 3px solid rgba(94, 234, 212, 0.2);
+      border-radius: 50%;
+      z-index: 0;
+      animation: pulse-cell 3s infinite ease-in-out;
+    }
+
+    .cell-decoration::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 30px;
+      height: 30px;
+      background: rgba(94, 234, 212, 0.1);
+      border-radius: 50%;
+    }
+
+    .cell-decoration::after {
+      content: '🧫';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 2rem;
+    }
+
+    @keyframes pulse-cell {
+      0%, 100% { transform: scale(1); opacity: 0.3; }
+      50% { transform: scale(1.1); opacity: 0.5; }
+    }
+
+    /* Microscope Decoration */
+    .microscope-decoration {
+      position: fixed;
+      right: 30px;
+      bottom: 15%;
+      font-size: 3rem;
+      opacity: 0.15;
+      animation: bob 4s infinite ease-in-out;
+      z-index: 0;
+    }
+
+    @keyframes bob {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    /* Setup Screen */
+    .setup-screen {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Logo Animation */
+    .logo-container {
+      position: relative;
+      margin-bottom: 1rem;
+    }
+
+    .logo-glow {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 150px;
+      height: 150px;
+      background: radial-gradient(circle, rgba(94, 234, 212, 0.3) 0%, transparent 70%);
+      border-radius: 50%;
+      animation: logo-pulse 3s infinite ease-in-out;
+    }
+
+    @keyframes logo-pulse {
+      0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+      50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.3; }
+    }
+
+    .logo-icon {
+      position: relative;
+      font-size: 4rem;
+      z-index: 1;
+      animation: logo-bounce 2s infinite ease-in-out;
+    }
+
+    @keyframes logo-bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .setup-card {
+      background: linear-gradient(145deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98));
+      border: 2px solid rgba(94, 234, 212, 0.3);
+      border-radius: 1.5rem;
+      padding: 2.5rem;
+      max-width: 500px;
+      width: 100%;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 40px rgba(94, 234, 212, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .setup-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: conic-gradient(from 0deg, transparent, rgba(94, 234, 212, 0.1), transparent 30%);
+      animation: card-shine 6s infinite linear;
+    }
+
+    @keyframes card-shine {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .setup-card > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .setup-title {
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .setup-title h1 {
+      font-size: 2.5rem;
+      background: linear-gradient(135deg, #5eead4, #2dd4bf, #14b8a6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: 0 0 30px rgba(94, 234, 212, 0.3);
+    }
+
+    .setup-subtitle {
+      color: #94a3b8;
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .setup-description {
+      color: #64748b;
+      text-align: center;
+      font-size: 0.875rem;
+      margin-bottom: 2rem;
+      line-height: 1.5;
+    }
+
+    .feature-badges {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 2rem;
+    }
+
+    .feature-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.375rem 0.75rem;
+      background: rgba(94, 234, 212, 0.1);
+      border: 1px solid rgba(94, 234, 212, 0.2);
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      color: #5eead4;
+    }
+
+    .player-count-section {
+      margin-bottom: 2rem;
+    }
+
+    .player-count-section label {
+      display: block;
+      color: #5eead4;
+      margin-bottom: 0.75rem;
+      font-weight: 500;
+    }
+
+    .player-count-buttons {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .count-btn {
+      flex: 1;
+      padding: 1rem;
+      border: 2px solid rgba(94, 234, 212, 0.3);
+      background: rgba(30, 41, 59, 0.5);
+      color: #f1f5f9;
+      border-radius: 0.75rem;
+      cursor: pointer;
+      font-size: 1.25rem;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .count-btn:hover {
+      border-color: rgba(94, 234, 212, 0.6);
+      background: rgba(94, 234, 212, 0.1);
+    }
+
+    .count-btn.active {
+      border-color: #5eead4;
+      background: rgba(94, 234, 212, 0.2);
+      box-shadow: 0 0 20px rgba(94, 234, 212, 0.3);
+    }
+
+    .players-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .player-input-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .player-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      flex-shrink: 0;
+    }
+
+    .player-input {
+      flex: 1;
+      padding: 0.875rem 1rem;
+      background: rgba(15, 23, 42, 0.8);
+      border: 2px solid rgba(94, 234, 212, 0.2);
+      border-radius: 0.75rem;
+      color: #f1f5f9;
+      font-size: 1rem;
+      transition: all 0.2s;
+    }
+
+    .player-input:focus {
+      outline: none;
+      border-color: #5eead4;
+      box-shadow: 0 0 15px rgba(94, 234, 212, 0.2);
+    }
+
+    .player-input::placeholder {
+      color: #64748b;
+    }
+
+    .start-btn {
+      width: 100%;
+      padding: 1rem 2rem;
+      background: linear-gradient(135deg, #14b8a6, #0d9488);
+      border: none;
+      border-radius: 0.75rem;
+      color: white;
+      font-size: 1.125rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 15px rgba(20, 184, 166, 0.4);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .start-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: 0.5s;
+    }
+
+    .start-btn:hover::before {
+      left: 100%;
+    }
+
+    .start-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(20, 184, 166, 0.5);
+    }
+
+    .start-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .start-btn:disabled::before {
+      display: none;
+    }
+
+    /* Game Screen */
+    .game-screen {
+      display: none;
+      min-height: 100vh;
+      padding: 1rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .game-header {
+      text-align: center;
+      margin-bottom: 1rem;
+      position: relative;
+    }
+
+    .game-header h1 {
+      font-size: 1.75rem;
+      background: linear-gradient(135deg, #5eead4, #2dd4bf);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .game-header-icons {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      gap: 0.5rem;
+      opacity: 0.5;
+    }
+
+    .game-header-icons.left {
+      left: 1rem;
+    }
+
+    .game-header-icons.right {
+      right: 1rem;
+    }
+
+    .game-container {
+      display: flex;
+      gap: 1.5rem;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* Players Panel */
+    .players-panel {
+      width: 280px;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem;
+      background: rgba(30, 41, 59, 0.5);
+      border-radius: 0.75rem;
+      border: 1px solid rgba(94, 234, 212, 0.2);
+    }
+
+    .panel-header span {
+      font-size: 1.25rem;
+    }
+
+    .panel-header h3 {
+      font-size: 0.875rem;
+      color: #5eead4;
+    }
+
+    .player-card {
+      background: linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
+      border: 2px solid rgba(94, 234, 212, 0.2);
+      border-radius: 1rem;
+      padding: 1rem;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .player-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, currentColor, transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .player-card.active {
+      border-color: #5eead4;
+      box-shadow: 0 0 25px rgba(94, 234, 212, 0.3);
+    }
+
+    .player-card.active::before {
+      opacity: 1;
+      background: linear-gradient(90deg, transparent, #5eead4, transparent);
+      animation: shine-bar 2s infinite;
+    }
+
+    @keyframes shine-bar {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+
+    .player-card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+
+    /* Pawn Style Avatar */
+    .player-pawn {
+      width: 44px;
+      height: 56px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .pawn-head {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2px solid currentColor;
+      background: currentColor;
+      box-shadow: 0 0 10px currentColor;
+      z-index: 1;
+    }
+
+    .pawn-body {
+      width: 32px;
+      height: 28px;
+      background: currentColor;
+      border-radius: 0 0 50% 50% / 0 0 100% 100%;
+      margin-top: -8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      position: relative;
+    }
+
+    .pawn-body::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 36px;
+      height: 8px;
+      background: currentColor;
+      border-radius: 50%;
+      opacity: 0.8;
+    }
+
+    .pawn-icon {
+      position: absolute;
+      top: 4px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.75rem;
+      z-index: 2;
+    }
+
+    .player-card-info h3 {
+      font-size: 1rem;
+      color: #f1f5f9;
+    }
+
+    .player-card-info span {
+      font-size: 0.75rem;
+      color: #94a3b8;
+    }
+
+    .player-position-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.25rem 0.5rem;
+      background: rgba(94, 234, 212, 0.1);
+      border-radius: 0.375rem;
+      font-size: 0.625rem;
+      color: #5eead4;
+      margin-top: 0.25rem;
+    }
+
+    .player-stats {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .stat-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .stat-icon {
+      font-size: 0.875rem;
+    }
+
+    .stat-bar-bg {
+      flex: 1;
+      height: 8px;
+      background: rgba(15, 23, 42, 0.8);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .stat-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.5s ease;
+    }
+
+    .stat-bar-fill.health {
+      background: linear-gradient(90deg, #ef4444, #f87171);
+    }
+
+    .stat-bar-fill.power {
+      background: linear-gradient(90deg, #3b82f6, #60a5fa);
+    }
+
+    .stat-value {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      min-width: 40px;
+      text-align: right;
+    }
+
+    .turn-indicator {
+      background: rgba(94, 234, 212, 0.1);
+      border: 1px solid rgba(94, 234, 212, 0.3);
+      border-radius: 0.5rem;
+      padding: 0.5rem;
+      text-align: center;
+      font-size: 0.875rem;
+      color: #5eead4;
+      margin-top: 0.5rem;
+      animation: pulse-turn 1.5s infinite ease-in-out;
+    }
+
+    @keyframes pulse-turn {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(94, 234, 212, 0.4); }
+      50% { box-shadow: 0 0 0 8px rgba(94, 234, 212, 0); }
+    }
+
+    /* Board Area */
+    .board-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .board-container {
+      background: linear-gradient(145deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
+      border: 3px solid rgba(94, 234, 212, 0.2);
+      border-radius: 1.5rem;
+      padding: 2rem;
+      position: relative;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 0 60px rgba(94, 234, 212, 0.05);
+    }
+
+    /* Board Corner Decorations */
+    .board-corner {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      opacity: 0.3;
+    }
+
+    .board-corner.top-left {
+      top: 10px;
+      left: 10px;
+      border-top: 3px solid #5eead4;
+      border-left: 3px solid #5eead4;
+      border-radius: 8px 0 0 0;
+    }
+
+    .board-corner.top-right {
+      top: 10px;
+      right: 10px;
+      border-top: 3px solid #5eead4;
+      border-right: 3px solid #5eead4;
+      border-radius: 0 8px 0 0;
+    }
+
+    .board-corner.bottom-left {
+      bottom: 10px;
+      left: 10px;
+      border-bottom: 3px solid #5eead4;
+      border-left: 3px solid #5eead4;
+      border-radius: 0 0 0 8px;
+    }
+
+    .board-corner.bottom-right {
+      bottom: 10px;
+      right: 10px;
+      border-bottom: 3px solid #5eead4;
+      border-right: 3px solid #5eead4;
+      border-radius: 0 0 8px 0;
+    }
+
+    .board-grid {
+      display: grid;
+      grid-template-columns: repeat(9, 60px);
+      grid-template-rows: repeat(5, 60px);
+      gap: 8px;
+      position: relative;
+    }
+
+    .tile {
+      width: 60px;
+      height: 60px;
+      border-radius: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      position: relative;
+      font-size: 1.5rem;
+      border: 2px solid transparent;
+    }
+
+    .tile:hover {
+      transform: scale(1.05);
+      z-index: 10;
+    }
+
+    .tile.normal {
+      background: linear-gradient(145deg, rgba(51, 65, 85, 0.8), rgba(30, 41, 59, 0.9));
+      border-color: rgba(148, 163, 184, 0.3);
+    }
+
+    .tile.virus {
+      background: linear-gradient(145deg, rgba(239, 68, 68, 0.3), rgba(185, 28, 28, 0.4));
+      border-color: rgba(239, 68, 68, 0.5);
+    }
+
+    .tile.immune {
+      background: linear-gradient(145deg, rgba(59, 130, 246, 0.3), rgba(37, 99, 235, 0.4));
+      border-color: rgba(59, 130, 246, 0.5);
+    }
+
+    .tile.medicine {
+      background: linear-gradient(145deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.4));
+      border-color: rgba(34, 197, 94, 0.5);
+    }
+
+    .tile.mutation {
+      background: linear-gradient(145deg, rgba(168, 85, 247, 0.3), rgba(126, 34, 206, 0.4));
+      border-color: rgba(168, 85, 247, 0.5);
+    }
+
+    .tile.antibody {
+      background: linear-gradient(145deg, rgba(6, 182, 212, 0.3), rgba(8, 145, 178, 0.4));
+      border-color: rgba(6, 182, 212, 0.5);
+    }
+
+    .tile.bloodstream {
+      background: linear-gradient(145deg, rgba(244, 63, 94, 0.3), rgba(190, 18, 60, 0.4));
+      border-color: rgba(244, 63, 94, 0.5);
+    }
+
+    .tile.organ {
+      background: linear-gradient(145deg, rgba(236, 72, 153, 0.3), rgba(219, 39, 119, 0.4));
+      border-color: rgba(236, 72, 153, 0.5);
+    }
+
+    .tile.question {
+      background: linear-gradient(145deg, rgba(234, 179, 8, 0.3), rgba(202, 138, 4, 0.4));
+      border-color: rgba(234, 179, 8, 0.5);
+    }
+
+    .tile.start {
+      background: linear-gradient(145deg, rgba(94, 234, 212, 0.3), rgba(20, 184, 166, 0.4));
+      border-color: rgba(94, 234, 212, 0.5);
+    }
+
+    .tile.finish {
+      background: linear-gradient(145deg, rgba(251, 191, 36, 0.4), rgba(245, 158, 11, 0.5));
+      border-color: rgba(251, 191, 36, 0.6);
+      animation: glow-finish 2s infinite ease-in-out;
+    }
+
+    @keyframes glow-finish {
+      0%, 100% { box-shadow: 0 0 10px rgba(251, 191, 36, 0.3); }
+      50% { box-shadow: 0 0 20px rgba(251, 191, 36, 0.6); }
+    }
+
+    .tile-number {
+      position: absolute;
+      top: 2px;
+      left: 4px;
+      font-size: 0.6rem;
+      color: rgba(148, 163, 184, 0.7);
+    }
+
+    .tile-players {
+      position: absolute;
+      bottom: 2px;
+      display: flex;
+      gap: 2px;
+      justify-content: center;
+    }
+
+    /* Mini Pawn on Board */
+    .tile-player-pawn {
+      width: 14px;
+      height: 20px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      filter: drop-shadow(0 2px 2px rgba(0,0,0,0.5));
+      animation: pawn-bounce 0.5s ease-out;
+    }
+
+    @keyframes pawn-bounce {
+      0% { transform: translateY(-10px); opacity: 0; }
+      50% { transform: translateY(2px); }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+
+    .mini-pawn-head {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 4px currentColor;
+      z-index: 1;
+    }
+
+    .mini-pawn-body {
+      width: 10px;
+      height: 10px;
+      background: currentColor;
+      border-radius: 0 0 50% 50% / 0 0 100% 100%;
+      margin-top: -3px;
+    }
+
+    .mini-pawn-body::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 12px;
+      height: 3px;
+      background: currentColor;
+      border-radius: 50%;
+      opacity: 0.8;
+    }
+
+    /* Dice Area */
+    .dice-area {
+      margin-top: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      background: rgba(30, 41, 59, 0.5);
+      padding: 1.5rem 2rem;
+      border-radius: 1rem;
+      border: 1px solid rgba(94, 234, 212, 0.2);
+    }
+
+    .dice-container {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .dice-decoration {
+      font-size: 1.5rem;
+      opacity: 0.3;
+    }
+
+    .dice {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(145deg, #ffffff, #e5e7eb);
+      border-radius: 12px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      padding: 10px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.8);
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+
+    .dice:hover {
+      transform: scale(1.05);
+    }
+
+    .dice.rolling {
+      animation: diceRoll 0.6s ease-in-out;
+    }
+
+    @keyframes diceRoll {
+      0% { transform: rotate(0deg) scale(1); }
+      25% { transform: rotate(90deg) scale(1.1); }
+      50% { transform: rotate(180deg) scale(1); }
+      75% { transform: rotate(270deg) scale(1.1); }
+      100% { transform: rotate(360deg) scale(1); }
+    }
+
+    .dice-dot {
+      width: 14px;
+      height: 14px;
+      background: radial-gradient(circle at 30% 30%, #374151, #111827);
+      border-radius: 50%;
+      margin: auto;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+      opacity: 0;
+    }
+
+    .dice-dot.visible {
+      opacity: 1;
+    }
+
+    .roll-btn {
+      padding: 0.875rem 2.5rem;
+      background: linear-gradient(135deg, #14b8a6, #0d9488);
+      border: none;
+      border-radius: 0.75rem;
+      color: white;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 15px rgba(20, 184, 166, 0.4);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .roll-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: 0.5s;
+    }
+
+    .roll-btn:hover:not(:disabled)::before {
+      left: 100%;
+    }
+
+    .roll-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(20, 184, 166, 0.5);
+    }
+
+    .roll-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .current-turn {
+      color: #94a3b8;
+      font-size: 0.875rem;
+    }
+
+    .current-turn strong {
+      color: #5eead4;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal {
+      background: linear-gradient(145deg, rgba(30, 41, 59, 0.98), rgba(15, 23, 42, 0.99));
+      border: 2px solid rgba(94, 234, 212, 0.3);
+      border-radius: 1.5rem;
+      padding: 2rem;
+      max-width: 550px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 60px rgba(94, 234, 212, 0.15);
+      animation: modalIn 0.3s ease;
+      position: relative;
+    }
+
+    .modal::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #5eead4, #14b8a6, #5eead4);
+      border-radius: 1.5rem 1.5rem 0 0;
+    }
+
+    @keyframes modalIn {
+      from {
+        opacity: 0;
+        transform: scale(0.9) translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .modal-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.75rem;
+    }
+
+    .modal-icon.question {
+      background: linear-gradient(135deg, rgba(234, 179, 8, 0.3), rgba(202, 138, 4, 0.4));
+    }
+
+    .modal-icon.event {
+      background: linear-gradient(135deg, rgba(94, 234, 212, 0.3), rgba(20, 184, 166, 0.4));
+    }
+
+    .modal-icon.winner {
+      background: linear-gradient(135deg, rgba(251, 191, 36, 0.4), rgba(245, 158, 11, 0.5));
+    }
+
+    .modal-title h2 {
+      font-size: 1.5rem;
+      color: #f1f5f9;
+      margin-bottom: 0.25rem;
+    }
+
+    .modal-title span {
+      font-size: 0.875rem;
+      color: #94a3b8;
+    }
+
+    .difficulty-badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .difficulty-badge.easy {
+      background: rgba(34, 197, 94, 0.2);
+      color: #4ade80;
+    }
+
+    .difficulty-badge.medium {
+      background: rgba(234, 179, 8, 0.2);
+      color: #fbbf24;
+    }
+
+    .difficulty-badge.hard {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+    }
+
+    .question-text {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(94, 234, 212, 0.2);
+      border-radius: 0.75rem;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+      color: #e2e8f0;
+      font-size: 1.0625rem;
+      line-height: 1.6;
+    }
+
+    .question-hint {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      padding: 0.75rem;
+      background: rgba(94, 234, 212, 0.1);
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      color: #5eead4;
+    }
+
+    .answer-input {
+      width: 100%;
+      padding: 1rem;
+      background: rgba(15, 23, 42, 0.8);
+      border: 2px solid rgba(94, 234, 212, 0.2);
+      border-radius: 0.75rem;
+      color: #f1f5f9;
+      font-size: 1rem;
+      resize: vertical;
+      min-height: 100px;
+      margin-bottom: 1rem;
+      font-family: inherit;
+    }
+
+    .answer-input:focus {
+      outline: none;
+      border-color: #5eead4;
+      box-shadow: 0 0 15px rgba(94, 234, 212, 0.2);
+    }
+
+    .answer-input::placeholder {
+      color: #64748b;
+    }
+
+    .modal-btn {
+      width: 100%;
+      padding: 1rem;
+      background: linear-gradient(135deg, #14b8a6, #0d9488);
+      border: none;
+      border-radius: 0.75rem;
+      color: white;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .modal-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(20, 184, 166, 0.4);
+    }
+
+    .result-box {
+      margin-top: 1.5rem;
+      padding: 1.25rem;
+      border-radius: 0.75rem;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .result-box.correct {
+      background: rgba(34, 197, 94, 0.15);
+      border: 1px solid rgba(34, 197, 94, 0.4);
+    }
+
+    .result-box.partial {
+      background: rgba(234, 179, 8, 0.15);
+      border: 1px solid rgba(234, 179, 8, 0.4);
+    }
+
+    .result-box.incorrect {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+    }
+
+    .result-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .result-header span {
+      font-size: 1.5rem;
+    }
+
+    .result-header strong {
+      font-size: 1.125rem;
+    }
+
+    .result-box.correct .result-header strong {
+      color: #4ade80;
+    }
+
+    .result-box.partial .result-header strong {
+      color: #fbbf24;
+    }
+
+    .result-box.incorrect .result-header strong {
+      color: #f87171;
+    }
+
+    .result-explanation {
+      color: #cbd5e1;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      margin-bottom: 1rem;
+    }
+
+    .result-rewards {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .reward-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: rgba(15, 23, 42, 0.5);
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+    }
+
+    .reward-item.positive {
+      color: #4ade80;
+    }
+
+    .reward-item.negative {
+      color: #f87171;
+    }
+
+    /* Event Modal Styles */
+    .event-content {
+      text-align: center;
+      padding: 1rem 0;
+    }
+
+    .event-description {
+      color: #cbd5e1;
+      font-size: 1.0625rem;
+      line-height: 1.6;
+      margin-bottom: 1.5rem;
+    }
+
+    .event-effects {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .effect-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.25rem;
+      background: rgba(15, 23, 42, 0.6);
+      border-radius: 0.75rem;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .effect-item.positive {
+      color: #4ade80;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .effect-item.negative {
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    /* Winner Modal */
+    .winner-content {
+      text-align: center;
+    }
+
+    .winner-trophy {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      animation: bounce 1s infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .winner-name {
+      font-size: 2rem;
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+    }
+
+    .winner-stats {
+      color: #94a3b8;
+      margin-bottom: 1rem;
+    }
+
+    .winner-confetti {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      font-size: 1.5rem;
+      margin-bottom: 1.5rem;
+      animation: confetti 0.5s ease infinite alternate;
+    }
+
+    @keyframes confetti {
+      from { transform: scale(1); }
+      to { transform: scale(1.1); }
+    }
+
+    /* Legend */
+    .legend {
+      margin-top: 1.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      justify-content: center;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.75rem;
+      color: #94a3b8;
+      background: rgba(30, 41, 59, 0.5);
+      padding: 0.375rem 0.75rem;
+      border-radius: 0.5rem;
+      transition: all 0.2s;
+    }
+
+    .legend-item:hover {
+      background: rgba(30, 41, 59, 0.8);
+      color: #f1f5f9;
+    }
+
+    .legend-icon {
+      font-size: 1rem;
+    }
+
+    /* Footer */
+    .game-footer {
+      text-align: center;
+      margin-top: 2rem;
+      padding: 1rem;
+      color: #64748b;
+      font-size: 0.75rem;
+    }
+
+    .game-footer a {
+      color: #5eead4;
+      text-decoration: none;
+    }
+
+    /* Responsive */
+    @media (max-width: 1100px) {
+      .game-container {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .players-panel {
+        width: 100%;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .player-card {
+        width: 200px;
+      }
+
+      .cell-decoration,
+      .microscope-decoration,
+      .dna-decoration {
+        display: none;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .board-grid {
+        grid-template-columns: repeat(9, 40px);
+        grid-template-rows: repeat(5, 40px);
+        gap: 4px;
+      }
+
+      .tile {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+      }
+
+      .board-container {
+        padding: 1rem;
+      }
+
+      .dice {
+        width: 60px;
+        height: 60px;
+      }
+
+      .dice-dot {
+        width: 10px;
+        height: 10px;
+      }
+
+      .feature-badges {
+        display: none;
+      }
+
+      .setup-description {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Background Particles -->
+  <div class="particles">
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+  </div>
+
+  <!-- Decorative Elements -->
+  <div class="cell-decoration"></div>
+  <div class="microscope-decoration">🔬</div>
+
+  <!-- Setup Screen -->
+  <div id="setupScreen" class="setup-screen">
+    <div class="logo-container">
+      <div class="logo-glow"></div>
+      <div class="logo-icon">🧬</div>
+    </div>
+    
+    <div class="setup-card">
+      <div class="setup-title">
+        <h1>ImmunoQuest</h1>
+      </div>
+      <p class="setup-subtitle">Jogo de Tabuleiro Imunologico</p>
+      <p class="setup-description">
+        Embarque em uma jornada pelo sistema imunologico! Responda perguntas, 
+        enfrente virus e colecione anticorpos para se tornar o defensor supremo.
+      </p>
+
+      <div class="feature-badges">
+        <div class="feature-badge">🎯 Perguntas Educativas</div>
+        <div class="feature-badge">🦠 Desafios de Virus</div>
+        <div class="feature-badge">💊 Powerups</div>
+        <div class="feature-badge">🏆 Multiplayer</div>
+      </div>
+
+      <div class="player-count-section">
+        <label>Numero de Jogadores</label>
+        <div class="player-count-buttons" id="countButtons">
+          <button class="count-btn" data-count="2">2</button>
+          <button class="count-btn" data-count="3">3</button>
+          <button class="count-btn" data-count="4">4</button>
+          <button class="count-btn" data-count="5">5</button>
+        </div>
+      </div>
+
+      <div class="players-form" id="playersForm"></div>
+
+      <button class="start-btn" id="startBtn" disabled>
+        🚀 Iniciar Aventura
+      </button>
+    </div>
+  </div>
+
+  <!-- Game Screen -->
+  <div id="gameScreen" class="game-screen">
+    <div class="game-header">
+      <div class="game-header-icons left">
+        <span>🧬</span>
+        <span>🔬</span>
+        <span>🧫</span>
+      </div>
+      <h1>ImmunoQuest</h1>
+      <div class="game-header-icons right">
+        <span>💉</span>
+        <span>🩺</span>
+        <span>🧪</span>
+      </div>
+    </div>
+
+    <div class="game-container">
+      <div class="players-panel">
+        <div class="panel-header">
+          <span>👥</span>
+          <h3>Jogadores</h3>
+        </div>
+        <div id="playersPanel"></div>
+      </div>
+
+      <div class="board-area">
+        <div class="board-container">
+          <div class="board-corner top-left"></div>
+          <div class="board-corner top-right"></div>
+          <div class="board-corner bottom-left"></div>
+          <div class="board-corner bottom-right"></div>
+          <div class="board-grid" id="boardGrid"></div>
+        </div>
+
+        <div class="dice-area">
+          <p class="current-turn">Vez de: <strong id="currentPlayerName">-</strong></p>
+          <div class="dice-container">
+            <span class="dice-decoration">🎲</span>
+            <div class="dice" id="dice">
+              <div class="dice-dot" data-pos="1"></div>
+              <div class="dice-dot" data-pos="2"></div>
+              <div class="dice-dot" data-pos="3"></div>
+              <div class="dice-dot" data-pos="4"></div>
+              <div class="dice-dot" data-pos="5"></div>
+              <div class="dice-dot" data-pos="6"></div>
+              <div class="dice-dot" data-pos="7"></div>
+              <div class="dice-dot" data-pos="8"></div>
+              <div class="dice-dot" data-pos="9"></div>
+            </div>
+            <span class="dice-decoration">🎲</span>
+          </div>
+          <button class="roll-btn" id="rollBtn">🎲 Jogar Dado</button>
+        </div>
+
+        <div class="legend">
+          <div class="legend-item"><span class="legend-icon">🏁</span> Inicio/Fim</div>
+          <div class="legend-item"><span class="legend-icon">🦠</span> Virus</div>
+          <div class="legend-item"><span class="legend-icon">🛡️</span> Imunidade</div>
+          <div class="legend-item"><span class="legend-icon">💊</span> Remedio</div>
+          <div class="legend-item"><span class="legend-icon">🧬</span> Mutacao</div>
+          <div class="legend-item"><span class="legend-icon">🔬</span> Anticorpos</div>
+          <div class="legend-item"><span class="legend-icon">❤️</span> Sangue</div>
+          <div class="legend-item"><span class="legend-icon">🫀</span> Orgao</div>
+          <div class="legend-item"><span class="legend-icon">❓</span> Pergunta</div>
+        </div>
+
+        <div class="game-footer">
+          Criado com 💚 para aprender Imunologia | 
+          <a href="#">Como Jogar</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Question Modal -->
+  <div class="modal-overlay" id="questionModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-icon question">❓</div>
+        <div class="modal-title">
+          <h2>Pergunta de Imunologia</h2>
+          <span class="difficulty-badge" id="difficultyBadge">Facil</span>
+        </div>
+      </div>
+      <div class="question-text" id="questionText"></div>
+      <div id="answerSection">
+        <div class="question-hint">
+          <span>💡</span>
+          <span>Dica: Use palavras-chave relacionadas ao tema!</span>
+        </div>
+        <textarea class="answer-input" id="answerInput" placeholder="Digite sua resposta aqui..."></textarea>
+        <button class="modal-btn" id="submitAnswerBtn">📝 Enviar Resposta</button>
+      </div>
+      <div class="result-box" id="resultBox" style="display: none;"></div>
+      <button class="modal-btn" id="closeQuestionBtn" style="display: none; margin-top: 1rem;">▶️ Continuar</button>
+    </div>
+  </div>
+
+  <!-- Event Modal -->
+  <div class="modal-overlay" id="eventModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-icon event" id="eventIcon">🦠</div>
+        <div class="modal-title">
+          <h2 id="eventTitle">Evento</h2>
+        </div>
+      </div>
+      <div class="event-content">
+        <p class="event-description" id="eventDescription"></p>
+        <div class="event-effects" id="eventEffects"></div>
+        <button class="modal-btn" id="closeEventBtn">▶️ Continuar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Winner Modal -->
+  <div class="modal-overlay" id="winnerModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-icon winner">🏆</div>
+        <div class="modal-title">
+          <h2>Vitoria!</h2>
+        </div>
+      </div>
+      <div class="winner-content">
+        <div class="winner-trophy">🏆</div>
+        <h2 class="winner-name" id="winnerName">Jogador</h2>
+        <p class="winner-stats" id="winnerStats">venceu o jogo!</p>
+        <div class="winner-confetti">
+          <span>🎉</span>
+          <span>🎊</span>
+          <span>⭐</span>
+          <span>🎊</span>
+          <span>🎉</span>
+        </div>
+        <button class="modal-btn" id="restartBtn">🔄 Jogar Novamente</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Game Data
+    const PLAYER_COLORS = ['#5eead4', '#f87171', '#a78bfa', '#fbbf24', '#34d399'];
+    const PLAYER_TYPES = ['Leucocito', 'Macrofago', 'Linfocito T', 'Linfocito B', 'Celula NK'];
+    const PLAYER_ICONS = ['🔵', '🟣', '🟢', '🟡', '🟠'];
+
+    const TILE_TYPES = [
+      'start', 'normal', 'virus', 'question', 'immune', 'normal', 'medicine', 'question', 'normal',
+      'normal', 'mutation', 'normal', 'question', 'antibody', 'normal', 'virus', 'normal', 'question',
+      'bloodstream', 'normal', 'question', 'organ', 'normal', 'immune', 'question', 'normal', 'medicine',
+      'normal', 'question', 'virus', 'normal', 'antibody', 'question', 'normal', 'mutation', 'organ',
+      'normal', 'question', 'immune', 'normal', 'medicine', 'question', 'normal', 'bloodstream', 'finish'
+    ];
+
+    const TILE_ICONS = {
+      start: '🏁', finish: '🏆', normal: '⚪', virus: '🦠', immune: '🛡️',
+      medicine: '💊', mutation: '🧬', antibody: '🔬', bloodstream: '❤️',
+      organ: '🫀', question: '❓'
+    };
+
+    const QUESTIONS = [
+      {
+        question: "Quais sao as principais celulas do sistema imune inato?",
+        keywords: ["neutrofilo", "macrofago", "celula nk", "natural killer", "dendritica", "mastocito", "basofilo", "eosinofilo"],
+        answer: "As principais celulas do sistema imune inato incluem neutrofilos, macrofagos, celulas NK (Natural Killer), celulas dendriticas, mastocitos, basofilos e eosinofilos.",
+        difficulty: "medium"
+      },
+      {
+        question: "O que sao anticorpos e qual sua funcao?",
+        keywords: ["imunoglobulina", "proteina", "antigeno", "neutralizar", "patogeno", "linfocito b", "defesa"],
+        answer: "Anticorpos sao proteinas (imunoglobulinas) produzidas por linfocitos B que reconhecem e se ligam a antigenos especificos, neutralizando patogenos e marcando-os para destruicao.",
+        difficulty: "easy"
+      },
+      {
+        question: "Qual a diferenca entre imunidade inata e adaptativa?",
+        keywords: ["inata", "adaptativa", "especifica", "inespecifica", "memoria", "rapida", "lenta", "primeira linha"],
+        answer: "A imunidade inata e inespecifica, rapida e nao gera memoria. A imunidade adaptativa e especifica, mais lenta inicialmente, mas gera memoria imunologica.",
+        difficulty: "medium"
+      },
+      {
+        question: "O que e um antigeno?",
+        keywords: ["molecula", "substancia", "resposta imune", "estranho", "reconhecido", "proteina", "patogeno"],
+        answer: "Um antigeno e qualquer molecula ou substancia capaz de ser reconhecida pelo sistema imune e desencadear uma resposta imunologica.",
+        difficulty: "easy"
+      },
+      {
+        question: "Como os linfocitos T citotoxicos destroem celulas infectadas?",
+        keywords: ["perforina", "granzima", "apoptose", "morte celular", "cd8", "mhc", "citotoxic"],
+        answer: "Os linfocitos T citotoxicos (CD8+) liberam perforinas e granzimas que induzem apoptose (morte celular programada) nas celulas infectadas.",
+        difficulty: "hard"
+      },
+      {
+        question: "O que e a resposta inflamatoria?",
+        keywords: ["inflamacao", "vermelhidao", "calor", "inchaco", "dor", "citocina", "vaso", "permeabilidade"],
+        answer: "A resposta inflamatoria e uma reacao do sistema imune caracterizada por vermelhidao, calor, inchaco e dor, causada pela liberacao de citocinas e aumento da permeabilidade vascular.",
+        difficulty: "medium"
+      },
+      {
+        question: "Qual o papel das vacinas na imunidade?",
+        keywords: ["memoria", "anticorpo", "linfocito", "protecao", "antigeno", "atenuado", "inativado", "prevenir"],
+        answer: "As vacinas introduzem antigenos atenuados ou inativados para estimular a producao de anticorpos e celulas de memoria, fornecendo protecao contra futuras infeccoes.",
+        difficulty: "easy"
+      },
+      {
+        question: "O que sao citocinas e cite exemplos.",
+        keywords: ["interleucina", "interferon", "tnf", "sinalizacao", "comunicacao", "celula", "proteina"],
+        answer: "Citocinas sao proteinas de sinalizacao celular. Exemplos incluem interleucinas (IL-1, IL-6), interferons (IFN-alpha, IFN-gamma) e TNF (Fator de Necrose Tumoral).",
+        difficulty: "hard"
+      },
+      {
+        question: "Como funciona a fagocitose?",
+        keywords: ["engolfar", "digerir", "fagocito", "macrofago", "neutrofilo", "lisossomo", "patogeno", "destruir"],
+        answer: "Na fagocitose, celulas como macrofagos e neutrofilos engolfam patogenos, formando um fagossomo que se funde com lisossomos para digerir e destruir o invasor.",
+        difficulty: "medium"
+      },
+      {
+        question: "O que e autoimunidade?",
+        keywords: ["proprio", "ataque", "tolerancia", "anticorpo", "doenca", "lupus", "artrite", "sistema"],
+        answer: "Autoimunidade ocorre quando o sistema imune perde a tolerancia e ataca tecidos do proprio organismo, causando doencas como lupus e artrite reumatoide.",
+        difficulty: "medium"
+      },
+      {
+        question: "Qual a funcao do sistema complemento?",
+        keywords: ["proteina", "cascata", "lise", "opsonizacao", "inflamacao", "patogeno", "membrana", "mac"],
+        answer: "O sistema complemento e uma cascata de proteinas que causa lise de patogenos, opsonizacao (marcacao para fagocitose) e inducao de inflamacao.",
+        difficulty: "hard"
+      },
+      {
+        question: "O que sao celulas dendriticas?",
+        keywords: ["apresentadora", "antigeno", "apc", "linfocito t", "mhc", "ativar", "imune adaptativa"],
+        answer: "Celulas dendriticas sao celulas apresentadoras de antigeno (APCs) que capturam patogenos, processam seus antigenos e os apresentam a linfocitos T para ativar a resposta adaptativa.",
+        difficulty: "hard"
+      },
+      {
+        question: "Como os anticorpos neutralizam virus?",
+        keywords: ["bloquear", "receptor", "entrada", "celula", "ligar", "impedir", "infeccao", "neutralizacao"],
+        answer: "Os anticorpos neutralizam virus ao se ligar a proteinas de superficie viral, bloqueando os receptores que os virus usam para entrar nas celulas e impedir a infeccao.",
+        difficulty: "medium"
+      },
+      {
+        question: "O que e memoria imunologica?",
+        keywords: ["linfocito", "memoria", "resposta", "rapida", "segunda", "exposicao", "longa", "duracao"],
+        answer: "Memoria imunologica e a capacidade do sistema imune de lembrar patogenos anteriores atraves de celulas de memoria, permitindo respostas mais rapidas em futuras exposicoes.",
+        difficulty: "easy"
+      },
+      {
+        question: "Qual a diferenca entre linfocitos T CD4+ e CD8+?",
+        keywords: ["auxiliar", "citotoxico", "helper", "killer", "coordenar", "destruir", "mhc", "classe"],
+        answer: "Linfocitos T CD4+ (auxiliares) coordenam a resposta imune ativando outras celulas. Linfocitos T CD8+ (citotoxicos) destroem diretamente celulas infectadas ou tumorais.",
+        difficulty: "hard"
+      }
+    ];
+
+    const TILE_EVENTS = {
+      virus: { title: "Infeccao Viral", description: "Um virus invadiu seu organismo! Voce sofre dano enquanto seu sistema imune reage.", healthChange: -15, powerChange: 0 },
+      immune: { title: "Resposta Imune", description: "Seu sistema imune esta fortalecido! Voce ganha poder de defesa.", healthChange: 0, powerChange: 15 },
+      medicine: { title: "Medicamento", description: "Voce encontrou um medicamento! Sua saude e restaurada.", healthChange: 20, powerChange: 0 },
+      mutation: { title: "Mutacao", description: "Uma mutacao aleatoria ocorreu...", random: true },
+      antibody: { title: "Producao de Anticorpos", description: "Seu corpo produziu anticorpos! Voce ganha saude e poder.", healthChange: 10, powerChange: 10 },
+      bloodstream: { title: "Corrente Sanguinea", description: "Voce entrou na corrente sanguinea e avanca mais rapido!", healthChange: 5, powerChange: 5, extraMove: 2 },
+      organ: { title: "Orgao Vital", description: "Voce chegou a um orgao vital! Proteja-o bem.", healthChange: 0, powerChange: 20 }
+    };
+
+    // Game State
+    let gameState = {
+      players: [],
+      currentPlayerIndex: 0,
+      gameStarted: false,
+      gameEnded: false,
+      isRolling: false,
+      currentQuestion: null
+    };
+
+    // DOM Elements
+    const setupScreen = document.getElementById('setupScreen');
+    const gameScreen = document.getElementById('gameScreen');
+    const countButtons = document.getElementById('countButtons');
+    const playersForm = document.getElementById('playersForm');
+    const startBtn = document.getElementById('startBtn');
+    const playersPanel = document.getElementById('playersPanel');
+    const boardGrid = document.getElementById('boardGrid');
+    const dice = document.getElementById('dice');
+    const rollBtn = document.getElementById('rollBtn');
+    const currentPlayerName = document.getElementById('currentPlayerName');
+    const questionModal = document.getElementById('questionModal');
+    const eventModal = document.getElementById('eventModal');
+    const winnerModal = document.getElementById('winnerModal');
+
+    // Initialize Setup
+    let selectedCount = 0;
+
+    countButtons.querySelectorAll('.count-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        countButtons.querySelectorAll('.count-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedCount = parseInt(btn.dataset.count);
+        renderPlayerInputs();
+      });
+    });
+
+    function renderPlayerInputs() {
+      playersForm.innerHTML = '';
+      for (let i = 0; i < selectedCount; i++) {
+        const row = document.createElement('div');
+        row.className = 'player-input-row';
+        row.innerHTML = `
+          <div class="player-pawn" style="color: ${PLAYER_COLORS[i]}">
+            <div class="pawn-head"></div>
+            <div class="pawn-body"></div>
+            <span class="pawn-icon">${PLAYER_ICONS[i]}</span>
+          </div>
+          <input type="text" class="player-input" id="playerName${i}" placeholder="Nome do Jogador ${i + 1}" maxlength="20">
+        `;
+        playersForm.appendChild(row);
+      }
+
+      playersForm.querySelectorAll('.player-input').forEach(input => {
+        input.addEventListener('input', checkStartButton);
+      });
+      checkStartButton();
+    }
+
+    function checkStartButton() {
+      const inputs = playersForm.querySelectorAll('.player-input');
+      const allFilled = Array.from(inputs).every(input => input.value.trim().length > 0);
+      startBtn.disabled = !allFilled || selectedCount < 2;
+    }
+
+    startBtn.addEventListener('click', startGame);
+
+    function startGame() {
+      const inputs = playersForm.querySelectorAll('.player-input');
+      gameState.players = Array.from(inputs).map((input, i) => ({
+        id: i,
+        name: input.value.trim(),
+        color: PLAYER_COLORS[i],
+        type: PLAYER_TYPES[i],
+        icon: PLAYER_ICONS[i],
+        position: 0,
+        health: 100,
+        power: 50
+      }));
+
+      gameState.currentPlayerIndex = 0;
+      gameState.gameStarted = true;
+      gameState.gameEnded = false;
+
+      setupScreen.style.display = 'none';
+      gameScreen.style.display = 'block';
+
+      renderBoard();
+      renderPlayers();
+      updateCurrentPlayer();
+    }
+
+    function renderBoard() {
+      boardGrid.innerHTML = '';
+      TILE_TYPES.forEach((type, index) => {
+        const tile = document.createElement('div');
+        tile.className = `tile ${type}`;
+        tile.dataset.index = index;
+        tile.innerHTML = `
+          <span class="tile-number">${index}</span>
+          <span>${TILE_ICONS[type]}</span>
+          <div class="tile-players" id="tilePlayers${index}"></div>
+        `;
+        boardGrid.appendChild(tile);
+      });
+      updatePlayerPositions();
+    }
+
+    function updatePlayerPositions() {
+      document.querySelectorAll('.tile-players').forEach(el => el.innerHTML = '');
+      
+      gameState.players.forEach(player => {
+        const tilePlayersEl = document.getElementById(`tilePlayers${player.position}`);
+        if (tilePlayersEl) {
+          const pawn = document.createElement('div');
+          pawn.className = 'tile-player-pawn';
+          pawn.style.color = player.color;
+          pawn.innerHTML = `
+            <div class="mini-pawn-head"></div>
+            <div class="mini-pawn-body"></div>
+          `;
+          tilePlayersEl.appendChild(pawn);
+        }
+      });
+    }
+
+    function renderPlayers() {
+      playersPanel.innerHTML = '';
+      gameState.players.forEach((player, index) => {
+        const isActive = index === gameState.currentPlayerIndex;
+        const card = document.createElement('div');
+        card.className = `player-card ${isActive ? 'active' : ''}`;
+        card.id = `playerCard${index}`;
+        card.innerHTML = `
+          <div class="player-card-header">
+            <div class="player-pawn" style="color: ${player.color}">
+              <div class="pawn-head"></div>
+              <div class="pawn-body"></div>
+              <span class="pawn-icon">${player.icon}</span>
+            </div>
+            <div class="player-card-info">
+              <h3>${player.name}</h3>
+              <span>${player.type}</span>
+              <div class="player-position-badge">
+                📍 Casa ${player.position}
+              </div>
+            </div>
+          </div>
+          <div class="player-stats">
+            <div class="stat-bar">
+              <span class="stat-icon">❤️</span>
+              <div class="stat-bar-bg">
+                <div class="stat-bar-fill health" style="width: ${player.health}%"></div>
+              </div>
+              <span class="stat-value">${player.health}/100</span>
+            </div>
+            <div class="stat-bar">
+              <span class="stat-icon">⚡</span>
+              <div class="stat-bar-bg">
+                <div class="stat-bar-fill power" style="width: ${player.power}%"></div>
+              </div>
+              <span class="stat-value">${player.power}/100</span>
+            </div>
+          </div>
+          ${isActive ? '<div class="turn-indicator">🎯 Sua vez!</div>' : ''}
+        `;
+        playersPanel.appendChild(card);
+      });
+    }
+
+    function updateCurrentPlayer() {
+      const player = gameState.players[gameState.currentPlayerIndex];
+      currentPlayerName.textContent = player.name;
+      currentPlayerName.style.color = player.color;
+      renderPlayers();
+    }
+
+    // Dice Logic
+    const dicePatterns = {
+      1: [5],
+      2: [1, 9],
+      3: [1, 5, 9],
+      4: [1, 3, 7, 9],
+      5: [1, 3, 5, 7, 9],
+      6: [1, 3, 4, 6, 7, 9]
+    };
+
+    function setDiceValue(value) {
+      const dots = dice.querySelectorAll('.dice-dot');
+      dots.forEach(dot => dot.classList.remove('visible'));
+      
+      const pattern = dicePatterns[value] || [];
+      pattern.forEach(pos => {
+        const dot = dice.querySelector(`[data-pos="${pos}"]`);
+        if (dot) dot.classList.add('visible');
+      });
+    }
+
+    setDiceValue(1);
+
+    rollBtn.addEventListener('click', rollDice);
+    dice.addEventListener('click', () => {
+      if (!gameState.isRolling && !rollBtn.disabled) rollDice();
+    });
+
+    function rollDice() {
+      if (gameState.isRolling || gameState.gameEnded) return;
+
+      gameState.isRolling = true;
+      rollBtn.disabled = true;
+      dice.classList.add('rolling');
+
+      let rollCount = 0;
+      const rollInterval = setInterval(() => {
+        setDiceValue(Math.floor(Math.random() * 6) + 1);
+        rollCount++;
+        if (rollCount >= 10) {
+          clearInterval(rollInterval);
+          const finalValue = Math.floor(Math.random() * 6) + 1;
+          setDiceValue(finalValue);
+          dice.classList.remove('rolling');
+          
+          setTimeout(() => {
+            movePlayer(finalValue);
+          }, 300);
+        }
+      }, 80);
+    }
+
+    function movePlayer(steps) {
+      const player = gameState.players[gameState.currentPlayerIndex];
+      const newPosition = Math.min(player.position + steps, TILE_TYPES.length - 1);
+      player.position = newPosition;
+      updatePlayerPositions();
+
+      if (newPosition >= TILE_TYPES.length - 1) {
+        endGame(player);
+        return;
+      }
+
+      const tileType = TILE_TYPES[newPosition];
+      
+      if (tileType === 'question') {
+        showQuestion();
+      } else if (TILE_EVENTS[tileType]) {
+        showEvent(tileType);
+      } else {
+        endTurn();
+      }
+    }
+
+    function showQuestion() {
+      const questionIndex = Math.floor(Math.random() * QUESTIONS.length);
+      gameState.currentQuestion = QUESTIONS[questionIndex];
+
+      document.getElementById('questionText').textContent = gameState.currentQuestion.question;
+      const badge = document.getElementById('difficultyBadge');
+      badge.textContent = gameState.currentQuestion.difficulty === 'easy' ? 'Facil' : 
+                         gameState.currentQuestion.difficulty === 'medium' ? 'Media' : 'Dificil';
+      badge.className = `difficulty-badge ${gameState.currentQuestion.difficulty}`;
+
+      document.getElementById('answerInput').value = '';
+      document.getElementById('answerSection').style.display = 'block';
+      document.getElementById('resultBox').style.display = 'none';
+      document.getElementById('closeQuestionBtn').style.display = 'none';
+      questionModal.classList.add('active');
+    }
+
+    document.getElementById('submitAnswerBtn').addEventListener('click', submitAnswer);
+
+    function normalizeText(text) {
+      return text.toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9\s]/g, '')
+        .trim();
+    }
+
+    function submitAnswer() {
+      const answer = normalizeText(document.getElementById('answerInput').value);
+      const question = gameState.currentQuestion;
+      const player = gameState.players[gameState.currentPlayerIndex];
+
+      let matchedKeywords = 0;
+      question.keywords.forEach(keyword => {
+        if (answer.includes(normalizeText(keyword))) {
+          matchedKeywords++;
+        }
+      });
+
+      const accuracy = matchedKeywords / Math.min(3, question.keywords.length);
+      let result, healthChange, powerChange;
+
+      if (accuracy >= 0.8) {
+        result = 'correct';
+        healthChange = question.difficulty === 'hard' ? 25 : question.difficulty === 'medium' ? 20 : 15;
+        powerChange = question.difficulty === 'hard' ? 20 : question.difficulty === 'medium' ? 15 : 10;
+      } else if (accuracy >= 0.4) {
+        result = 'partial';
+        healthChange = 5;
+        powerChange = 5;
+      } else {
+        result = 'incorrect';
+        healthChange = -10;
+        powerChange = 0;
+      }
+
+      player.health = Math.max(0, Math.min(100, player.health + healthChange));
+      player.power = Math.max(0, Math.min(100, player.power + powerChange));
+
+      const resultBox = document.getElementById('resultBox');
+      resultBox.className = `result-box ${result}`;
+      resultBox.innerHTML = `
+        <div class="result-header">
+          <span>${result === 'correct' ? '✅' : result === 'partial' ? '⚠️' : '❌'}</span>
+          <strong>${result === 'correct' ? 'Resposta Correta!' : result === 'partial' ? 'Parcialmente Correto' : 'Resposta Incorreta'}</strong>
+        </div>
+        <p class="result-explanation">${question.answer}</p>
+        <div class="result-rewards">
+          <div class="reward-item ${healthChange >= 0 ? 'positive' : 'negative'}">
+            ❤️ ${healthChange >= 0 ? '+' : ''}${healthChange} Saude
+          </div>
+          ${powerChange !== 0 ? `
+            <div class="reward-item ${powerChange >= 0 ? 'positive' : 'negative'}">
+              ⚡ ${powerChange >= 0 ? '+' : ''}${powerChange} Poder
+            </div>
+          ` : ''}
+        </div>
+      `;
+
+      document.getElementById('answerSection').style.display = 'none';
+      resultBox.style.display = 'block';
+      document.getElementById('closeQuestionBtn').style.display = 'block';
+    }
+
+    document.getElementById('closeQuestionBtn').addEventListener('click', () => {
+      questionModal.classList.remove('active');
+      gameState.currentQuestion = null;
+      renderPlayers();
+      endTurn();
+    });
+
+    function showEvent(tileType) {
+      const event = TILE_EVENTS[tileType];
+      const player = gameState.players[gameState.currentPlayerIndex];
+
+      let healthChange = event.healthChange || 0;
+      let powerChange = event.powerChange || 0;
+
+      if (event.random) {
+        healthChange = Math.floor(Math.random() * 41) - 20;
+        powerChange = Math.floor(Math.random() * 31) - 10;
+      }
+
+      player.health = Math.max(0, Math.min(100, player.health + healthChange));
+      player.power = Math.max(0, Math.min(100, player.power + powerChange));
+
+      document.getElementById('eventIcon').textContent = TILE_ICONS[tileType];
+      document.getElementById('eventTitle').textContent = event.title;
+      document.getElementById('eventDescription').textContent = event.description;
+
+      let effectsHtml = '';
+      if (healthChange !== 0) {
+        effectsHtml += `<div class="effect-item ${healthChange >= 0 ? 'positive' : 'negative'}">
+          ❤️ ${healthChange >= 0 ? '+' : ''}${healthChange}
+        </div>`;
+      }
+      if (powerChange !== 0) {
+        effectsHtml += `<div class="effect-item ${powerChange >= 0 ? 'positive' : 'negative'}">
+          ⚡ ${powerChange >= 0 ? '+' : ''}${powerChange}
+        </div>`;
+      }
+      if (event.extraMove) {
+        effectsHtml += `<div class="effect-item positive">🎲 +${event.extraMove} casas</div>`;
+      }
+      document.getElementById('eventEffects').innerHTML = effectsHtml;
+
+      eventModal.classList.add('active');
+
+      if (event.extraMove) {
+        gameState.extraMove = event.extraMove;
+      }
+    }
+
+    document.getElementById('closeEventBtn').addEventListener('click', () => {
+      eventModal.classList.remove('active');
+      renderPlayers();
+
+      if (gameState.extraMove) {
+        const player = gameState.players[gameState.currentPlayerIndex];
+        player.position = Math.min(player.position + gameState.extraMove, TILE_TYPES.length - 1);
+        updatePlayerPositions();
+        gameState.extraMove = null;
+
+        if (player.position >= TILE_TYPES.length - 1) {
+          endGame(player);
+          return;
+        }
+      }
+
+      endTurn();
+    });
+
+    function endTurn() {
+      gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
+      gameState.isRolling = false;
+      rollBtn.disabled = false;
+      updateCurrentPlayer();
+    }
+
+    function endGame(winner) {
+      gameState.gameEnded = true;
+      document.getElementById('winnerName').textContent = winner.name;
+      document.getElementById('winnerStats').textContent = `Chegou a meta com ${winner.health} de saude e ${winner.power} de poder!`;
+      winnerModal.classList.add('active');
+    }
+
+    document.getElementById('restartBtn').addEventListener('click', () => {
+      winnerModal.classList.remove('active');
+      gameScreen.style.display = 'none';
+      setupScreen.style.display = 'flex';
+      gameState = {
+        players: [],
+        currentPlayerIndex: 0,
+        gameStarted: false,
+        gameEnded: false,
+        isRolling: false,
+        currentQuestion: null
+      };
+      selectedCount = 0;
+      countButtons.querySelectorAll('.count-btn').forEach(b => b.classList.remove('active'));
+      playersForm.innerHTML = '';
+      startBtn.disabled = true;
+    });
+  </script>
+</body>
+</html>
